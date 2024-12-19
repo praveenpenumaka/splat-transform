@@ -4,7 +4,7 @@
   "author": "PlayCanvas<support@playcanvas.com>",
   "description": "3D Gaussian Splat Transform Tool",
   "license": "MIT",
-  "main": "index.js",
+  "bin": "dist/index.mjs",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
