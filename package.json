@@ -1,6 +1,6 @@
 {
   "name": "@playcanvas/splat-transform",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "author": "PlayCanvas<support@playcanvas.com>",
   "homepage": "https://playcanvas.com",
   "description": "CLI tool for converting PLY gaussian splat scenes to compressed.ply",
@@ -21,12 +21,13 @@
     "url": "git+https://github.com/playcanvas/splat-transform.git"
   },
   "bin": {
-    "splat-transform": "dist/index.mjs"
+    "splat-transform": "bin/cli.mjs"
   },
   "files": [
     "dist/",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "package-lock.json"
   ],
   "scripts": {
     "build": "rollup -c",

@@ -59,4 +59,4 @@ const main = async () => {
     console.log('done');
 };
 
-await main();
+export { main };
