@@ -16,7 +16,10 @@
     "supersplat"
   ],
   "license": "MIT",
-  "repository": "https://github.com/playcanvas/splat-transform",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/playcanvas/splat-transform.git"
+  },
   "bin": {
     "splat-transform": "dist/index.mjs"
   },
@@ -24,7 +27,7 @@
     "dist/",
     "LICENSE",
     "README.md"
-  ]  ,
+  ],
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
