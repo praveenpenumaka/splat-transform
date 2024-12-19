@@ -1,3 +1,7 @@
-# splat-transform - 3D Gaussian Splat Converter
+# Splat Transform - 3D Gaussian Splat Converter
 
-splat-transform is an open source tool for converting PLY gaussian splat scenes to compressed.ply format.
+Splat Transform is an open source CLI tool for converting PLY gaussian splat scenes to compressed.ply format.
+
+This very first version supports the following:
+- reading gaussian splat ply files containing only float32 data
+- writing PlayCanvas' compressed.ply format
