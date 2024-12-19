@@ -14,6 +14,8 @@ Then you can invoke the CLI from anywhere as follows:
 splat-transform input.ply output.compressed.ply
 ```
 
+## Note
+
 This very first version supports the following:
 - reading gaussian splat ply files containing only float32 data
 - writing PlayCanvas' compressed.ply format
