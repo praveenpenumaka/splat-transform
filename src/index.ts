@@ -1,32 +1,50 @@
-import { version } from '../package.json';
 import { open } from 'node:fs/promises';
+
+import { version } from '../package.json';
+import { GaussianData } from './gaussian-data';
+import { sigmoid } from './math';
 import { readPly } from './readPly';
-import { PlyFile } from './ply';
-import { Splat } from './splat';
+import { SplatData } from './splat-data';
 import { writeCompressedPly } from './writeCompressedPly';
 
-const readData = async (filename: string) => {
+const readSplatData = async (filename: string) => {
     // open input
     console.log(`loading '${filename}'...`);
     const inputFile = await open(filename, 'r');
 
     // read contents
-    console.log(`reading contents...`);
+    console.log('reading contents...');
     const plyFile = await readPly(inputFile);
 
     // close file
     await inputFile.close();
 
-    return plyFile;
+    return new SplatData(plyFile);
 };
 
-const processData = (plyFile: PlyFile) => {
-    // check we have the necessary elements for processing
+const filter = (gaussianData: GaussianData) => {
+    const { buffer } = gaussianData;
+
+    // filter out very small opacities
+    if (sigmoid(gaussianData.data.opacity) < 1/255) {
+        return false;
+    }
+
+    // if any property is NaN or Inf, filter it out
+    for (let i = 0; i < buffer.length; ++i) {
+        if (!isFinite(buffer[i])) {
+            return false;
+        }
+    }
+
+    return true;
 };
 
-const writeData = async (filename: string, plyFile: PlyFile) => {
+const writeData = async (filename: string, splatData: SplatData) => {
+    // open output
+    console.log(`writing '${filename}'...`);
     const outputFile = await open(filename, 'w');
-    await writeCompressedPly(outputFile, new Splat(plyFile));
+    await writeCompressedPly(outputFile, splatData, filter);
     await outputFile.close();
 };
 
@@ -43,13 +61,10 @@ const main = async () => {
 
     try {
         // open input
-        const plyFile = await readData(inputFilename);
-
-        // process
-        processData(plyFile);
+        const splatData = await readSplatData(inputFilename);
 
         // write
-        await writeData(outputFilename, plyFile);
+        await writeData(outputFilename, splatData);
     } catch (err) {
         // handle errors
         console.error(`error: ${err.message}`);
