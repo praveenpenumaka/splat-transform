@@ -22,7 +22,7 @@ splat-transform input_a.ply input_b.ply output/meta.json
 The input and output files can optionally be transformed. For example:
 ```
 # load input.ply and translate it by (1, 0, 0) and write the result to output.ply
-splat-transform input.ply --t 1,0,0 output.ply
+splat-transform input.ply -t 1,0,0 output.ply
 
 # remove entries containing NaN and Inf and bands larger than 2
 splat-transform input.ply output.ply --filterNaN --filterBands 2
