@@ -37,8 +37,3 @@ The full list of possible actions are as follows:
 -filterByValue -c name,comparator,value     Filter gaussians by a value. Specify the value name, comparator (lt, lte, gt, gte, eq, neq) and value
 -filterBands   -h 1                         Filter spherical harmonic band data. Value must be 0, 1, 2 or 3.
 ```
-
-## Note
-This very first version supports the following:
-- reading gaussian splat ply files containing only float32 data
-- writing PlayCanvas' compressed.ply format
