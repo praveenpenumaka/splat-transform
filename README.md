@@ -1,6 +1,6 @@
-# Splat Transform - 3D Gaussian Splat Converter
+# SplatTransform - 3D Gaussian Splat Converter
 
-Splat Transform is an open source CLI tool for reading gaussian splat PLY files and writing them to PLY, Compressed PLY, CSV, and SOGS format.
+SplatTransform is an open source CLI tool for reading gaussian splat PLY files and writing them to PLY, Compressed PLY, CSV, and SOGS format.
 
 Multiple files may be combined and transformed before being written to the output.
 
