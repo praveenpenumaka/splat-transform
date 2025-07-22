@@ -55,6 +55,8 @@ Actions can be repeated and applied in any order:
 -w, --overwrite                         Overwrite output file if it already exists
 -h, --help                              Show help and exit
 -v, --version                           Show version and exit
+-g, --no-gpu                            Disable gpu when compressing spherical harmonics.
+-i, --iterations  <number>              Specify the number of iterations when compressing spherical harmonics. More iterations generally lead to better results. Default is 10.
 ```
 
 ## Examples
