@@ -4,10 +4,10 @@ import { dirname, resolve } from 'node:path';
 import sharp from 'sharp';
 
 import { DataTable } from '../data-table';
+import { createDevice } from '../gpu/gpu-device';
 import { generateOrdering } from '../ordering';
 import { kmeans } from '../utils/k-means';
 
-const outputSH = false;
 
 const shNames = new Array(45).fill('').map((_, i) => `f_rest_${i}`);
 
@@ -51,7 +51,7 @@ const identity = (index: number, width: number) => {
     return index;
 };
 
-const writeSogs = async (fileHandle: FileHandle, dataTable: DataTable, outputFilename: string) => {
+const writeSogs = async (fileHandle: FileHandle, dataTable: DataTable, outputFilename: string, shIterations = 10, shMethod: 'cpu' | 'gpu') => {
 
     // generate an optimal ordering
     const sortIndices = generateOrdering(dataTable);
@@ -222,71 +222,70 @@ const writeSogs = async (fileHandle: FileHandle, dataTable: DataTable, outputFil
         }
     };
 
-    // disable spherical harmonics
-    if (outputSH) {
-        // spherical harmonics
-        const shBands = { '9': 1, '24': 2, '-1': 3 }[shNames.findIndex(v => !dataTable.hasColumn(v))] ?? 0;
+    // spherical harmonics
+    const shBands = { '9': 1, '24': 2, '-1': 3 }[shNames.findIndex(v => !dataTable.hasColumn(v))] ?? 0;
 
-        if (shBands > 0) {
-            const shCoeffs = [0, 3, 8, 15][shBands];
-            const centroidsNames = shNames.slice(0, shCoeffs * 3);
-            const centroidsColumns = centroidsNames.map(name => dataTable.getColumnByName(name));
+    // @ts-ignore
+    if (shBands > 0) {
+        const shCoeffs = [0, 3, 8, 15][shBands];
+        const shColumnNames = shNames.slice(0, shCoeffs * 3);
+        const shColumns = shColumnNames.map(name => dataTable.getColumnByName(name));
 
-            // create a table with just spherical harmonics data
-            const shDataTable = new DataTable(centroidsColumns);
+        // create a table with just spherical harmonics data
+        const shDataTable = new DataTable(shColumns);
 
-            // calculate kmeans
-            const { centroids, labels } = kmeans(shDataTable, 1 * 1024);
+        const paletteSize = Math.min(64, 2 ** Math.floor(Math.log2(dataTable.numRows / 1024))) * 1024;
 
-            // write centroids
-            const centroidsBuf = new Uint8Array(64 * shCoeffs * Math.ceil(centroids.numRows / 64) * channels);
-            const centroidsMinMax = calcMinMax(shDataTable, centroidsNames);
-            const centroidsMin = centroidsMinMax.map(v => v[0]).reduce((a, b) => Math.min(a, b));
-            const centroidsMax = centroidsMinMax.map(v => v[1]).reduce((a, b) => Math.max(a, b));
-            const centroidsRow: any = {};
-            for (let i = 0; i < centroids.numRows; ++i) {
-                centroids.getRow(i, centroidsRow);
+        // calculate kmeans
+        const gpuDevice = shMethod === 'gpu' ? await createDevice() : null;
+        const { centroids, labels } = await kmeans(shDataTable, paletteSize, shIterations, gpuDevice);
 
-                for (let j = 0; j < shCoeffs; ++j) {
-                    const x = centroidsRow[centroidsNames[shCoeffs * 0 + j]];
-                    const y = centroidsRow[centroidsNames[shCoeffs * 1 + j]];
-                    const z = centroidsRow[centroidsNames[shCoeffs * 2 + j]];
+        // write centroids
+        const centroidsBuf = new Uint8Array(64 * shCoeffs * Math.ceil(centroids.numRows / 64) * channels);
+        const centroidsMinMax = calcMinMax(shDataTable, shColumnNames);
+        const centroidsMin = centroidsMinMax.map(v => v[0]).reduce((a, b) => Math.min(a, b));
+        const centroidsMax = centroidsMinMax.map(v => v[1]).reduce((a, b) => Math.max(a, b));
+        const centroidsRow: any = {};
+        for (let i = 0; i < centroids.numRows; ++i) {
+            centroids.getRow(i, centroidsRow);
 
-                    centroidsBuf[i * shCoeffs * 4 + j * 4 + 0] = 255 * ((x - centroidsMin) / (centroidsMax - centroidsMin));
-                    centroidsBuf[i * shCoeffs * 4 + j * 4 + 1] = 255 * ((y - centroidsMin) / (centroidsMax - centroidsMin));
-                    centroidsBuf[i * shCoeffs * 4 + j * 4 + 2] = 255 * ((z - centroidsMin) / (centroidsMax - centroidsMin));
-                    centroidsBuf[i * shCoeffs * 4 + j * 4 + 3] = 0xff;
-                }
+            for (let j = 0; j < shCoeffs; ++j) {
+                const x = centroidsRow[shColumnNames[shCoeffs * 0 + j]];
+                const y = centroidsRow[shColumnNames[shCoeffs * 1 + j]];
+                const z = centroidsRow[shColumnNames[shCoeffs * 2 + j]];
+
+                centroidsBuf[i * shCoeffs * 4 + j * 4 + 0] = 255 * ((x - centroidsMin) / (centroidsMax - centroidsMin));
+                centroidsBuf[i * shCoeffs * 4 + j * 4 + 1] = 255 * ((y - centroidsMin) / (centroidsMax - centroidsMin));
+                centroidsBuf[i * shCoeffs * 4 + j * 4 + 2] = 255 * ((z - centroidsMin) / (centroidsMax - centroidsMin));
+                centroidsBuf[i * shCoeffs * 4 + j * 4 + 3] = 0xff;
             }
-            await write('shN_centroids.webp', centroidsBuf, 64 * shCoeffs, Math.ceil(centroids.numRows / 64));
-
-            // write labels
-            const labelsBuf = new Uint8Array(width * height * channels);
-            for (let i = 0; i < dataTable.numRows; ++i) {
-                const label = labels[sortIndices[i]];
-
-                const ti = layout(i, width);
-                labelsBuf[ti * 4] = label & 0xff;
-                labelsBuf[ti * 4 + 1] = (label >> 8) & 0xff;
-                labelsBuf[ti * 4 + 2] = 0;
-                labelsBuf[ti * 4 + 3] = 0xff;
-            }
-            await write('shN_labels.webp', labelsBuf);
-
-            meta.shN = {
-                shape: [dataTable.numRows, shCoeffs],
-                dtype: 'float32',
-                mins: centroidsMin,
-                maxs: centroidsMax,
-                quantization: 8,
-                files: [
-                    'shN_centroids.webp',
-                    'shN_labels.webp'
-                ]
-            };
-
-            console.log(centroids, labels);
         }
+        await write('shN_centroids.webp', centroidsBuf, 64 * shCoeffs, Math.ceil(centroids.numRows / 64));
+
+        // write labels
+        const labelsBuf = new Uint8Array(width * height * channels);
+        for (let i = 0; i < dataTable.numRows; ++i) {
+            const label = labels[sortIndices[i]];
+
+            const ti = layout(i, width);
+            labelsBuf[ti * 4] = label & 0xff;
+            labelsBuf[ti * 4 + 1] = (label >> 8) & 0xff;
+            labelsBuf[ti * 4 + 2] = 0;
+            labelsBuf[ti * 4 + 3] = 0xff;
+        }
+        await write('shN_labels.webp', labelsBuf);
+
+        meta.shN = {
+            shape: [dataTable.numRows, shCoeffs],
+            dtype: 'float32',
+            mins: centroidsMin,
+            maxs: centroidsMax,
+            quantization: 8,
+            files: [
+                'shN_centroids.webp',
+                'shN_labels.webp'
+            ]
+        };
     }
 
     await fileHandle.write((new TextEncoder()).encode(JSON.stringify(meta, null, 4)));
