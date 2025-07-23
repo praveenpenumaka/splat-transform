@@ -3,17 +3,14 @@
   "version": "0.5.1",
   "author": "PlayCanvas<support@playcanvas.com>",
   "homepage": "https://playcanvas.com",
-  "description": "CLI tool for converting PLY gaussian splat scenes to compressed.ply",
+  "description": "CLI tool for 3D Gaussian splat format conversion and transformation",
   "keywords": [
+    "3d-gaussian-splatting",
+    "cli",
+    "gaussian-splatting",
     "playcanvas",
-    "gs",
-    "gaussian splatting",
-    "gaussian",
-    "splatting",
-    "ply",
-    "compression",
-    "compressed.ply",
-    "supersplat"
+    "supersplat",
+    "typescript"
   ],
   "license": "MIT",
   "repository": {
