@@ -21,10 +21,7 @@
     "splat-transform": "bin/cli.mjs"
   },
   "files": [
-    "dist/",
-    "LICENSE",
-    "README.md",
-    "package-lock.json"
+    "dist/"
   ],
   "scripts": {
     "build": "rollup -c",
