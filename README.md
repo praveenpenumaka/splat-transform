@@ -12,7 +12,7 @@ Multiple files may be combined and transformed before being written to the outpu
 
 ## Installation
 
-First install the package globally:
+Install or update to the latest version:
 
 ```bash
 npm install -g @playcanvas/splat-transform
