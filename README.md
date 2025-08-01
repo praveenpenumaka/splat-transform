@@ -6,7 +6,7 @@
 
 | [User Guide](https://developer.playcanvas.com/user-manual/gaussian-splatting/editing/splat-transform/) | [Blog](https://blog.playcanvas.com/) | [Forum](https://forum.playcanvas.com/) | [Discord](https://discord.gg/RSaMRzg) |
 
-SplatTransform is an open source CLI tool for reading gaussian splat PLY files and writing them to PLY, Compressed PLY, CSV, and SOGS format.
+SplatTransform is an open source CLI tool for reading gaussian splat files (PLY, SPLAT, KSPLAT formats), applying transformations and filters, and writing them to PLY, Compressed PLY, CSV, and SOGS format.
 
 Multiple files may be combined and transformed before being written to the output.
 
