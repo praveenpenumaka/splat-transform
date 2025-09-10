@@ -51,7 +51,8 @@ splat-transform [GLOBAL]  <input.{ply|compressed.ply|splat|ksplat}> [ACTIONS]  .
 **Output:**
 - `.ply` - Standard PLY format
 - `.compressed.ply` - Compressed PLY format
-- `meta.json` - SOGS format (JSON + WebP images)
+- `.sog` - SOG bundled format
+- `meta.json` - SOG unbundled format (JSON + WebP images)
 - `.csv` - Comma-separated values
 
 ## Actions
