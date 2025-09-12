@@ -1,13 +1,10 @@
 import { open, unlink, FileHandle } from 'node:fs/promises';
+import os from 'node:os';
 
+import { html, css, js } from '@playcanvas/supersplat-viewer';
 import { Vec3 } from 'playcanvas';
 
 import { writeCompressedPly } from './write-compressed-ply';
-import { writePly } from './write-ply';
-import indexCss from '../../submodules/supersplat-viewer/dist/index.css';
-import indexHtml from '../../submodules/supersplat-viewer/dist/index.html';
-// eslint-disable-next-line import/default
-import indexJs from '../../submodules/supersplat-viewer/dist/index.js';
 import { PlyData } from '../readers/read-ply';
 
 
@@ -39,25 +36,26 @@ const writeHtmlApp = async (fileHandle: FileHandle, plyData: PlyData, camera: Ve
         animTracks: [] as unknown[]
     };
 
-    const tempPly = await open('temp.ply', 'w+');
+    const tempPlyPath = `${os.tmpdir()}/temp.ply`;
+    const tempPly = await open(tempPlyPath, 'w+');
     await writeCompressedPly(tempPly, plyData.elements[0].dataTable);
-    const openPly = await open('temp.ply', 'r');
+    const openPly = await open(tempPlyPath, 'r');
     const compressedPly = encodeBase64(await openPly.readFile());
     await openPly.close();
-    await unlink('temp.ply');
+    await unlink(tempPlyPath);
 
     const style = '<link rel="stylesheet" href="./index.css">';
     const script = '<script type="module" src="./index.js"></script>';
     const settings = 'settings: fetch(settingsUrl).then(response => response.json())';
     const content = 'fetch(contentUrl)';
 
-    const html = indexHtml
-    .replace(style, `<style>\n${pad(indexCss, 12)}\n        </style>`)
-    .replace(script, `<script type="module">\n${pad(indexJs, 12)}\n        </script>`)
+    const generatedHtml = html
+    .replace(style, `<style>\n${pad(css, 12)}\n        </style>`)
+    .replace(script, `<script type="module">\n${pad(js, 12)}\n        </script>`)
     .replace(settings, `settings: ${JSON.stringify(experienceSettings)}`)
     .replace(content, `fetch("data:application/ply;base64,${compressedPly}")`);
 
-    await fileHandle.write(new TextEncoder().encode(html));
+    await fileHandle.write(new TextEncoder().encode(generatedHtml));
 
 };
 
