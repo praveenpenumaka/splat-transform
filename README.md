@@ -54,7 +54,7 @@ splat-transform [GLOBAL]  <input.{ply|compressed.ply|splat|ksplat}> [ACTIONS]  .
 - `.sog` - SOG bundled format
 - `meta.json` - SOG unbundled format (JSON + WebP images)
 - `.csv` - Comma-separated values
-- `.html` - supersplat standalone html viewer app
+- `.html` - Standalone HTML viewer app
 
 ## Actions
 
