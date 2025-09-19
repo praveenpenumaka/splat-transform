@@ -45,20 +45,17 @@ splat-transform [GLOBAL]  <input.{ply|compressed.ply|splat|ksplat}> [ACTIONS]  .
 
 ## Supported Formats
 
-**Input:**
-- `.ply` - Standard PLY format
-- `.compressed.ply` - Compressed PLY format (auto-detected and decompressed on read)
-- `.splat` - Binary splat format (antimatter15 format)
-- `.ksplat` - Compressed binary splat format (mkkellogg format)
-- `.spz` - Niantic's spz format
-
-**Output:**
-- `.ply` - Standard PLY format
-- `.compressed.ply` - Compressed PLY format
-- `.sog` - SOG bundled format
-- `meta.json` - SOG unbundled format (JSON + WebP images)
-- `.csv` - Comma-separated values
-- `.html` - Standalone HTML viewer app
+| Format | Input | Output | Description |
+| ------ | ----- | ------ | ----------- |
+| `.ply` | ✅ | ✅ | Standard PLY format |
+| `.compressed.ply` | ✅ | ✅ | Compressed PLY format (auto-detected and decompressed on read) |
+| `.ksplat` | ✅ | ❌ | Compressed splat format (mkkellogg format) |
+| `.splat` | ✅ | ❌ | Compressed splat format (antimatter15 format) |
+| `.spz` | ✅ | ❌ | Compressed splat format (Niantic format) |
+| `.sog` | ❌ | ✅ | Bundled super-compressed format (recommended) |
+| `meta.json` | ❌ | ✅ | Unbundled super-compressed format (also outputs `.webp` images) |
+| `.csv` | ❌ | ✅ | Comma-separated values spreadsheet |
+| `.html` | ❌ | ✅ | Standalone HTML viewer app |
 
 ## Actions
 
