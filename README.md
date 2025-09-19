@@ -50,6 +50,7 @@ splat-transform [GLOBAL]  <input.{ply|compressed.ply|splat|ksplat}> [ACTIONS]  .
 - `.compressed.ply` - Compressed PLY format (auto-detected and decompressed on read)
 - `.splat` - Binary splat format (antimatter15 format)
 - `.ksplat` - Compressed binary splat format (mkkellogg format)
+- `.spz` - Niantic's spz format
 
 **Output:**
 - `.ply` - Standard PLY format
