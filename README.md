@@ -109,7 +109,7 @@ splat-transform input.ply output.sog
 # Convert to SOG unbundled format
 splat-transform input.ply output/meta.json
 
-# Convert to supersplat-html-viewer with target and camera location
+# Convert to HTML viewer with target and camera location
 splat-transform -a 0,0,0 -e 0,0,10 input.ply output.html
 ```
 
