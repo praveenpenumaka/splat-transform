@@ -397,7 +397,7 @@ EXAMPLES
     # Chain two inputs and write compressed output, overwriting if necessary
     splat-transform -w cloudA.ply -r 0,90,0 cloudB.ply -s 2 merged.compressed.ply
 
-    # Create a html app with a custom camera and target
+    # Create an HTML app with a custom camera and target
     splat-transform -a 0,0,0 -e 0,0,10 bunny.ply bunny_app.html
 `;
 
