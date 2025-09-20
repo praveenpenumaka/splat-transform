@@ -14,7 +14,7 @@ import { readPly } from './readers/read-ply';
 import { readSplat } from './readers/read-splat';
 import { writeCompressedPly } from './writers/write-compressed-ply';
 import { writeCsv } from './writers/write-csv';
-import { writeHtmlApp } from './writers/write-html-app';
+import { writeHtml } from './writers/write-html';
 import { writePly } from './writers/write-ply';
 import { writeSog } from './writers/write-sog';
 
@@ -117,13 +117,13 @@ const writeFile = async (filename: string, dataTable: DataTable, options: Option
             });
             break;
         case 'html':
-            await writeHtmlApp(outputFile, {
+            await writeHtml(outputFile, {
                 comments: [],
                 elements: [{
                     name: 'vertex',
                     dataTable: dataTable
                 }]
-            }, options.camera, options.target);
+            }, options.camera, options.target, 'ply', options.iterations, options.gpu ? 'gpu' : 'cpu');
             break;
     }
 
