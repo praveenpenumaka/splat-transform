@@ -69,6 +69,8 @@ Actions can be repeated and applied in any order:
 -c, --filterByValue name,cmp,value      Keep splats where <name> <cmp> <value>
                                         cmp ∈ {lt,lte,gt,gte,eq,neq}
 -b, --filterBands  {0|1|2|3}            Strip spherical-harmonic bands > N
+-o, --sphereSelect center:radius        Filter gaussians within a sphere centered at center with certain radius
+-x, --boxSelect topLeft:dimensions      Filter gaussian within a box starting a topLeft corner and given dimension
 -P, --params name=value[,name=value...] Pass parameters to .mjs generator script
 ```
 
