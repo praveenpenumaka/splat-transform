@@ -34,15 +34,15 @@ type FilterBands = {
     value: 0 | 1 | 2 | 3;
 };
 
-type BoxSelect = {
-    kind: 'boxSelect';
+type FilterBox = {
+    kind: 'filterBox';
     value: Vec3;
     dimensions: Vec3;
     invert: boolean;
 };
 
-type SphereSelect = {
-    kind: 'sphereSelect';
+type FilterSphere = {
+    kind: 'filterSphere';
     value: Vec3;
     radius: number;
     invert: boolean;
@@ -54,7 +54,7 @@ type Param = {
     value: string;
 };
 
-type ProcessAction = Translate | Rotate | Scale | FilterNaN | FilterByValue | FilterBands | Param | BoxSelect | SphereSelect;
+type ProcessAction = Translate | Rotate | Scale | FilterNaN | FilterByValue | FilterBands | Param | FilterBox | FilterSphere;
 
 
 const shNames = new Array(45).fill('').map((_, i) => `f_rest_${i}`);
@@ -149,7 +149,7 @@ const processDataTable = (dataTable: DataTable, processActions: ProcessAction[])
                 }
                 break;
             }
-            case 'boxSelect': {
+            case 'filterBox': {
                 const predicate = (row: any, rowIndex: number) => {
                     const x = row.x;
                     const y = row.y;
@@ -161,7 +161,7 @@ const processDataTable = (dataTable: DataTable, processActions: ProcessAction[])
                 result = filter(result, predicate);
                 break;
             }
-            case 'sphereSelect': {
+            case 'filterSphere': {
                 const predicate = (row: any, rowIndex: number) => {
                     const x = row.x;
                     const y = row.y;
