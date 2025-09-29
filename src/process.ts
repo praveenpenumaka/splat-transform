@@ -56,7 +56,6 @@ type Param = {
 
 type ProcessAction = Translate | Rotate | Scale | FilterNaN | FilterByValue | FilterBands | Param | FilterBox | FilterSphere;
 
-
 const shNames = new Array(45).fill('').map((_, i) => `f_rest_${i}`);
 
 const filter = (dataTable: DataTable, predicate: (row: any, rowIndex: number) => boolean): DataTable => {
