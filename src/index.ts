@@ -539,7 +539,7 @@ const main = async () => {
             throw new Error('No splats to write');
         }
 
-        console.log(`Read ${dataTable.numRows} gaussians`);
+        console.log(`Loaded ${dataTable.numRows} gaussians`);
 
         // write file
         await writeFile(resolve(outputArg.filename), dataTable, options);
