@@ -151,9 +151,7 @@ const processDataTable = (dataTable: DataTable, processActions: ProcessAction[])
             }
             case 'filterBox': {
                 const predicate = (row: any, rowIndex: number) => {
-                    const x = row.x;
-                    const y = row.y;
-                    const z = row.z;
+                    const { x, y, z } = row;
                     // Box is defined by a top-left starting points and dimensions
                     const result = x >= processAction.value.x && x <= processAction.value.x + processAction.dimensions.x && y >= processAction.value.y && y <= processAction.value.y + processAction.dimensions.y && z >= processAction.value.z && z <= processAction.value.z + processAction.dimensions.z;
                     return processAction.invert ? !result : result;
