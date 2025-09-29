@@ -161,9 +161,7 @@ const processDataTable = (dataTable: DataTable, processActions: ProcessAction[])
             }
             case 'filterSphere': {
                 const predicate = (row: any, rowIndex: number) => {
-                    const x = row.x;
-                    const y = row.y;
-                    const z = row.z;
+                    const { x, y, z } = row;
                     // Distance from center < radius
                     const result = Math.sqrt((x - processAction.value.x) ** 2 + (y - processAction.value.y) ** 2 + (z - processAction.value.z) ** 2) < processAction.radius;
                     return processAction.invert ? !result : result;
