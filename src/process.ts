@@ -170,7 +170,7 @@ const processDataTable = (dataTable: DataTable, processActions: ProcessAction[])
                     const result = Math.sqrt((x - processAction.value.x) ** 2 + (y - processAction.value.y) ** 2 + (z - processAction.value.z) ** 2) < processAction.radius;
                     return processAction.invert ? !result : result;
                 };
-                result =  filter(result, predicate);
+                result = filter(result, predicate);
                 break;
             }
             case 'param': {
