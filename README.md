@@ -71,7 +71,7 @@ Actions can be repeated and applied in any order:
 ```bash
 -h, --help                              Show help and exit.
 -v, --version                           Show version and exit.
--w, --overwrite                         Overwrite output file if it already exists. Default is false.
+-w, --overwrite                         Overwrite output file if it already exists.
 -g, --no-gpu                            Disable gpu when compressing spherical harmonics.
 -i, --iterations    n                   Specify the number of iterations n when compressing spherical harmonics. More iterations generally lead to better results. Default is 10.
 -p, --cameraPos     x,y,z               Specify the viewer starting position. Default is (2, 2, -2).

@@ -432,10 +432,10 @@ USAGE
     interpreted as actions that modify the final result.
 
 SUPPORTED INPUTS
-    .ply   .compressed.ply   .splat   .ksplat   .spz   .mjs
+    .ply   .compressed.ply   .splat   .ksplat   .spz   .sog   meta.json   .mjs
 
 SUPPORTED OUTPUTS
-    .ply   .compressed.ply   meta.json (SOG)   .sog   .csv
+    .ply   .compressed.ply   .sog   meta.json   .csv   .html
 
 ACTIONS (can be repeated, in any order)
     -t, --translate     x,y,z               Translate splats by (x, y, z).
