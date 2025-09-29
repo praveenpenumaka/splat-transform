@@ -36,16 +36,14 @@ type FilterBands = {
 
 type FilterBox = {
     kind: 'filterBox';
-    value: Vec3;
-    dimensions: Vec3;
-    invert: boolean;
+    min: Vec3;
+    max: Vec3;
 };
 
 type FilterSphere = {
     kind: 'filterSphere';
-    value: Vec3;
+    center: Vec3;
     radius: number;
-    invert: boolean;
 };
 
 type Param = {
@@ -54,7 +52,7 @@ type Param = {
     value: string;
 };
 
-type ProcessAction = Translate | Rotate | Scale | FilterNaN | FilterByValue | FilterBands | Param | FilterBox | FilterSphere;
+type ProcessAction = Translate | Rotate | Scale | FilterNaN | FilterByValue | FilterBands | FilterBox | FilterSphere | Param;
 
 const shNames = new Array(45).fill('').map((_, i) => `f_rest_${i}`);
 
@@ -156,21 +154,20 @@ const processDataTable = (dataTable: DataTable, processActions: ProcessAction[])
                 break;
             }
             case 'filterBox': {
+                const { min, max } = processAction;
                 const predicate = (row: any, rowIndex: number) => {
                     const { x, y, z } = row;
-                    // Box is defined by a top-left starting points and dimensions
-                    const result = x >= processAction.value.x && x <= processAction.value.x + processAction.dimensions.x && y >= processAction.value.y && y <= processAction.value.y + processAction.dimensions.y && z >= processAction.value.z && z <= processAction.value.z + processAction.dimensions.z;
-                    return processAction.invert ? !result : result;
+                    return x >= min.x && x <= max.x && y >= min.y && y <= max.y && z >= min.z && z <= max.z;
                 };
                 result = filter(result, predicate);
                 break;
             }
             case 'filterSphere': {
+                const { center, radius } = processAction;
+                const radiusSq = radius * radius;
                 const predicate = (row: any, rowIndex: number) => {
                     const { x, y, z } = row;
-                    // Distance from center < radius
-                    const result = Math.sqrt((x - processAction.value.x) ** 2 + (y - processAction.value.y) ** 2 + (z - processAction.value.z) ** 2) < processAction.radius;
-                    return processAction.invert ? !result : result;
+                    return (x - center.x) ** 2 + (y - center.y) ** 2 + (z - center.z) ** 2 < radiusSq;
                 };
                 result = filter(result, predicate);
                 break;
