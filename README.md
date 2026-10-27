@@ -84,7 +84,7 @@ splat-transform [GLOBAL] input [ACTIONS]  ...  output [ACTIONS]
 | `.ksplat` | ✅ | ❌ | Compressed splat format (mkkellogg format) |
 | `.splat` | ✅ | ❌ | Compressed splat format (antimatter15 format) |
 | `.mjs` | ✅ | ❌ | Generate a scene using an mjs script (Beta) |
-| `.glb` | ❌ | ✅ | Binary glTF with [KHR_gaussian_splatting](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_gaussian_splatting) extension |
+| `.glb` | ✅ | ✅ | Binary glTF with [KHR_gaussian_splatting](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_gaussian_splatting) extension |
 | `.csv` | ❌ | ✅ | Comma-separated values spreadsheet |
 | `.html` | ❌ | ✅ | HTML viewer app (single-page or unbundled) based on SOG |
 | `.voxel.json` | ❌ | ✅ | Sparse voxel octree for collision detection |
