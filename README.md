@@ -91,6 +91,10 @@ splat-transform [GLOBAL] input [ACTIONS]  ...  output [ACTIONS]
 | `.webp` | ❌ | ✅ | Lossless WebP image rendered from a camera view via GPU rasterizer |
 | `null` | ❌ | ✅ | Discard output (useful with `--stats` for analysis-only runs) |
 
+GLB input currently supports one embedded-buffer `KHR_gaussian_splatting` ellipse primitive in the
+`srgb_rec709_display` color space, including indexed primitives. Multiple Gaussian primitives, mesh instancing,
+sparse accessors, and non-identity transforms on the Gaussian node hierarchy are rejected.
+
 ### Antialiased and 2DGS scenes
 
 Scenes trained with antialiasing or as 2DGS are tagged, and the tag is preserved where the output format can hold it. `--info` reports it as `model`.

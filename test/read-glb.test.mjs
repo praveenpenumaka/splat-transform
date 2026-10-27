@@ -96,71 +96,7 @@ const writeBytes = async (table) => {
     return fs.results.get('scene.glb');
 };
 
-const makeInterleavedNormalizedGlb = () => {
-    const rows = 2;
-    const rowStride = 28;
-    const dcOffset = rows * rowStride;
-    const bin = new Uint8Array(dcOffset + rows * 12);
-    const view = new DataView(bin.buffer);
-    const positions = [
-        [1, 2, 3],
-        [-4, 5, -6]
-    ];
-    const rotations = [
-        [0, 0, 0, 32767],
-        [32767, 0, 0, 0]
-    ];
-    const scales = [
-        [16384, 32768, 49151],
-        [6554, 13107, 19661]
-    ];
-    const opacities = [64, 192];
-    const dc = [
-        [0.1, 0.2, 0.3],
-        [-0.1, -0.2, -0.3]
-    ];
-    for (let row = 0; row < rows; row++) {
-        const base = row * rowStride;
-        for (let c = 0; c < 3; c++) view.setFloat32(base + c * 4, positions[row][c], true);
-        for (let c = 0; c < 4; c++) view.setInt16(base + 12 + c * 2, rotations[row][c], true);
-        for (let c = 0; c < 3; c++) view.setUint16(base + 20 + c * 2, scales[row][c], true);
-        view.setUint8(base + 26, opacities[row]);
-        for (let c = 0; c < 3; c++) view.setFloat32(dcOffset + row * 12 + c * 4, dc[row][c], true);
-    }
-
-    const gltf = {
-        asset: { version: '2.0' },
-        buffers: [{ byteLength: bin.length }],
-        bufferViews: [
-            { buffer: 0, byteOffset: 0, byteLength: dcOffset, byteStride: rowStride },
-            { buffer: 0, byteOffset: dcOffset, byteLength: rows * 12 }
-        ],
-        accessors: [
-            { bufferView: 0, byteOffset: 0, componentType: 5126, count: rows, type: 'VEC3' },
-            { bufferView: 0, byteOffset: 12, componentType: 5122, normalized: true, count: rows, type: 'VEC4' },
-            { bufferView: 0, byteOffset: 20, componentType: 5123, normalized: true, count: rows, type: 'VEC3' },
-            { bufferView: 0, byteOffset: 26, componentType: 5121, normalized: true, count: rows, type: 'SCALAR' },
-            { bufferView: 1, byteOffset: 0, componentType: 5126, count: rows, type: 'VEC3' }
-        ],
-        meshes: [
-            {
-                primitives: [
-                    {
-                        mode: 0,
-                        attributes: {
-                            POSITION: 0,
-                            'KHR_gaussian_splatting:ROTATION': 1,
-                            'KHR_gaussian_splatting:SCALE': 2,
-                            'KHR_gaussian_splatting:OPACITY': 3,
-                            'KHR_gaussian_splatting:SH_DEGREE_0_COEF_0': 4
-                        },
-                        extensions: { KHR_gaussian_splatting: {} }
-                    }
-                ]
-            }
-        ],
-        nodes: [{ mesh: 0 }]
-    };
+const encodeGlb = (gltf, bin) => {
     const encodedJson = new TextEncoder().encode(JSON.stringify(gltf));
     const jsonLength = (encodedJson.length + 3) & ~3;
     const binLength = (bin.length + 3) & ~3;
@@ -177,7 +113,102 @@ const makeInterleavedNormalizedGlb = () => {
     resultView.setUint32(binHeader, binLength, true);
     resultView.setUint32(binHeader + 4, 0x004e4942, true);
     result.set(bin, binHeader + 8);
-    return { bytes: result, positions, rotations, scales, opacities, dc };
+    return result;
+};
+
+const makeInterleavedNormalizedGlb = ({ normalizedScale = true, opacityValues = [64, 192], indices } = {}) => {
+    const rows = 2;
+    const rowStride = 28;
+    const dcOffset = rows * rowStride;
+    const indexOffset = dcOffset + rows * 12;
+    const bin = new Uint8Array(indexOffset + (indices?.length ?? 0) * 2);
+    const view = new DataView(bin.buffer);
+    const positions = [
+        [1, 2, 3],
+        [-4, 5, -6]
+    ];
+    const rotations = [
+        [0, 0, 0, 32767],
+        [32767, 0, 0, 0]
+    ];
+    const scales = normalizedScale
+        ? [
+              [16384, 32768, 49151],
+              [6554, 13107, 19661]
+          ]
+        : [
+              [1, 2, 3],
+              [4, 5, 6]
+          ];
+    const opacities = opacityValues;
+    const dc = [
+        [0.1, 0.2, 0.3],
+        [-0.1, -0.2, -0.3]
+    ];
+    for (let row = 0; row < rows; row++) {
+        const base = row * rowStride;
+        for (let c = 0; c < 3; c++) view.setFloat32(base + c * 4, positions[row][c], true);
+        for (let c = 0; c < 4; c++) view.setInt16(base + 12 + c * 2, rotations[row][c], true);
+        for (let c = 0; c < 3; c++) view.setUint16(base + 20 + c * 2, scales[row][c], true);
+        view.setUint8(base + 26, opacities[row]);
+        for (let c = 0; c < 3; c++) view.setFloat32(dcOffset + row * 12 + c * 4, dc[row][c], true);
+    }
+    for (let i = 0; i < (indices?.length ?? 0); i++) view.setUint16(indexOffset + i * 2, indices[i], true);
+
+    const gltf = {
+        asset: { version: '2.0' },
+        extensionsUsed: ['KHR_gaussian_splatting'],
+        scene: 0,
+        scenes: [{ nodes: [0] }],
+        buffers: [{ byteLength: bin.length }],
+        bufferViews: [
+            { buffer: 0, byteOffset: 0, byteLength: dcOffset, byteStride: rowStride },
+            { buffer: 0, byteOffset: dcOffset, byteLength: rows * 12 },
+            ...(indices ? [{ buffer: 0, byteOffset: indexOffset, byteLength: indices.length * 2 }] : [])
+        ],
+        accessors: [
+            { bufferView: 0, byteOffset: 0, componentType: 5126, count: rows, type: 'VEC3' },
+            { bufferView: 0, byteOffset: 12, componentType: 5122, normalized: true, count: rows, type: 'VEC4' },
+            {
+                bufferView: 0,
+                byteOffset: 20,
+                componentType: 5123,
+                ...(normalizedScale ? { normalized: true } : {}),
+                count: rows,
+                type: 'VEC3'
+            },
+            { bufferView: 0, byteOffset: 26, componentType: 5121, normalized: true, count: rows, type: 'SCALAR' },
+            { bufferView: 1, byteOffset: 0, componentType: 5126, count: rows, type: 'VEC3' },
+            ...(indices
+                ? [{ bufferView: 2, byteOffset: 0, componentType: 5123, count: indices.length, type: 'SCALAR' }]
+                : [])
+        ],
+        meshes: [
+            {
+                primitives: [
+                    {
+                        mode: 0,
+                        attributes: {
+                            POSITION: 0,
+                            'KHR_gaussian_splatting:ROTATION': 1,
+                            'KHR_gaussian_splatting:SCALE': 2,
+                            'KHR_gaussian_splatting:OPACITY': 3,
+                            'KHR_gaussian_splatting:SH_DEGREE_0_COEF_0': 4
+                        },
+                        ...(indices ? { indices: 5 } : {}),
+                        extensions: {
+                            KHR_gaussian_splatting: {
+                                kernel: 'ellipse',
+                                colorSpace: 'srgb_rec709_display'
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        nodes: [{ mesh: 0 }]
+    };
+    return { bytes: encodeGlb(gltf, bin), gltf, bin, positions, rotations, scales, opacities, dc };
 };
 
 const assertTablesClose = (actual, expected, tolerance = 2e-5) => {
@@ -296,6 +327,169 @@ describe('GLB reader', () => {
         } finally {
             await source.close();
         }
+    });
+
+    it('decodes unnormalized integer SCALE accessors', async () => {
+        const fixture = makeInterleavedNormalizedGlb({ normalizedScale: false });
+        const fs = new MemoryReadFileSystem();
+        fs.set('integer-scale.glb', fixture.bytes);
+        const pool = createChunkDataPool({ chunkSize: 2 });
+        const source = await readGlb(await fs.createSource('integer-scale.glb'), pool);
+        try {
+            const table = await materializeToDataTable(source, pool);
+            for (let row = 0; row < 2; row++) {
+                for (let component = 0; component < 3; component++) {
+                    assert.ok(
+                        Math.abs(
+                            table.getColumnByName(`scale_${component}`).data[row] -
+                                Math.log(fixture.scales[row][component])
+                        ) < 1e-6
+                    );
+                }
+            }
+        } finally {
+            await source.close();
+        }
+    });
+
+    it('preserves fully transparent and opaque opacity endpoints', async () => {
+        const fixture = makeInterleavedNormalizedGlb({ opacityValues: [0, 255] });
+        const fs = new MemoryReadFileSystem();
+        fs.set('opacity-endpoints.glb', fixture.bytes);
+        const pool = createChunkDataPool({ chunkSize: 2 });
+        const source = await readGlb(await fs.createSource('opacity-endpoints.glb'), pool);
+        try {
+            const opacity = (await materializeToDataTable(source, pool)).getColumnByName('opacity').data;
+            assert.strictEqual(opacity[0], -Infinity);
+            assert.strictEqual(opacity[1], Infinity);
+        } finally {
+            await source.close();
+        }
+    });
+
+    it('honors POINTS indices and their order', async () => {
+        const fixture = makeInterleavedNormalizedGlb({ indices: [1, 0, 1] });
+        const fs = new MemoryReadFileSystem();
+        fs.set('indexed.glb', fixture.bytes);
+        const pool = createChunkDataPool({ chunkSize: 2 });
+        const source = await readGlb(await fs.createSource('indexed.glb'), pool);
+        try {
+            assert.strictEqual(source.meta.numGaussians, 3);
+            const table = await materializeToDataTable(source, pool);
+            assert.deepStrictEqual(Array.from(table.getColumnByName('x').data), [-4, 1, -4]);
+            const dc = table.getColumnByName('f_dc_0').data;
+            assert.ok(Math.abs(dc[0] + 0.1) < 1e-6);
+            assert.ok(Math.abs(dc[1] - 0.1) < 1e-6);
+            assert.ok(Math.abs(dc[2] + 0.1) < 1e-6);
+        } finally {
+            await source.close();
+        }
+    });
+
+    it('composes shuffled gathers with POINTS indices', async () => {
+        const fixture = makeInterleavedNormalizedGlb({ indices: [1, 0, 1] });
+        const fs = new MemoryReadFileSystem();
+        fs.set('indexed-gather.glb', fixture.bytes);
+        const pool = createChunkDataPool({ chunkSize: 8 });
+        const source = await readGlb(await fs.createSource('indexed-gather.glb'), pool);
+        const logicalRows = new Uint32Array([2, 0, 2, 1]);
+        const position = pool.acquire('position', source.meta.layouts.position, logicalRows.length);
+        try {
+            await source.read({
+                indices: logicalRows,
+                indexOffset: 0,
+                count: logicalRows.length,
+                position
+            });
+            const values = new Float32Array(position.data).subarray(0, logicalRows.length * 3);
+            assert.deepStrictEqual(Array.from(values.filter((_, i) => i % 3 === 0)), [-4, -4, -4, 1]);
+        } finally {
+            position.release();
+            await source.close();
+        }
+    });
+
+    it('rejects a POINTS index outside the attribute range', async () => {
+        const fixture = makeInterleavedNormalizedGlb({ indices: [2] });
+        const fs = new MemoryReadFileSystem();
+        fs.set('bad-index.glb', fixture.bytes);
+        const pool = createChunkDataPool({ chunkSize: 2 });
+        const source = await readGlb(await fs.createSource('bad-index.glb'), pool);
+        try {
+            await assert.rejects(materializeToDataTable(source, pool), /primitive index 2 is out of range/);
+        } finally {
+            await source.close();
+        }
+    });
+
+    it('requires the ellipse kernel and a supported color space', async () => {
+        for (const missing of ['kernel', 'colorSpace']) {
+            const fixture = makeInterleavedNormalizedGlb();
+            delete fixture.gltf.meshes[0].primitives[0].extensions.KHR_gaussian_splatting[missing];
+            const fs = new MemoryReadFileSystem();
+            fs.set('invalid-extension.glb', encodeGlb(fixture.gltf, fixture.bin));
+            await assert.rejects(
+                readGlb(await fs.createSource('invalid-extension.glb'), createChunkDataPool()),
+                missing === 'colorSpace' ? /color.?space/i : /kernel/i
+            );
+        }
+
+        for (const [property, value] of [
+            ['kernel', 'box'],
+            ['colorSpace', 'acescg']
+        ]) {
+            const fixture = makeInterleavedNormalizedGlb();
+            fixture.gltf.meshes[0].primitives[0].extensions.KHR_gaussian_splatting[property] = value;
+            const fs = new MemoryReadFileSystem();
+            fs.set('unsupported-extension.glb', encodeGlb(fixture.gltf, fixture.bin));
+            await assert.rejects(
+                readGlb(await fs.createSource('unsupported-extension.glb'), createChunkDataPool()),
+                property === 'colorSpace' ? /color.?space/i : /kernel/i
+            );
+        }
+    });
+
+    it('rejects normalized float accessors', async () => {
+        const fixture = makeInterleavedNormalizedGlb();
+        fixture.gltf.accessors[0].normalized = true;
+        const fs = new MemoryReadFileSystem();
+        fs.set('normalized-float.glb', encodeGlb(fixture.gltf, fixture.bin));
+        await assert.rejects(
+            readGlb(await fs.createSource('normalized-float.glb'), createChunkDataPool()),
+            /float accessor 'POSITION' must not be normalized/
+        );
+    });
+
+    it('ignores unrelated node transforms but rejects a transformed Gaussian node', async () => {
+        const unrelated = makeInterleavedNormalizedGlb();
+        unrelated.gltf.nodes.push({ translation: [1, 2, 3] });
+        unrelated.gltf.scenes[0].nodes.push(1);
+        const unrelatedFs = new MemoryReadFileSystem();
+        unrelatedFs.set('unrelated-transform.glb', encodeGlb(unrelated.gltf, unrelated.bin));
+        const source = await readGlb(
+            await unrelatedFs.createSource('unrelated-transform.glb'),
+            createChunkDataPool({ chunkSize: 2 })
+        );
+        await source.close();
+
+        const transformed = makeInterleavedNormalizedGlb();
+        transformed.gltf.nodes[0].translation = [1, 2, 3];
+        const transformedFs = new MemoryReadFileSystem();
+        transformedFs.set('transformed.glb', encodeGlb(transformed.gltf, transformed.bin));
+        await assert.rejects(
+            readGlb(await transformedFs.createSource('transformed.glb'), createChunkDataPool()),
+            /node transform/
+        );
+
+        const transformedParent = makeInterleavedNormalizedGlb();
+        transformedParent.gltf.nodes.push({ children: [0], translation: [1, 2, 3] });
+        transformedParent.gltf.scenes[0].nodes = [1];
+        const transformedParentFs = new MemoryReadFileSystem();
+        transformedParentFs.set('transformed-parent.glb', encodeGlb(transformedParent.gltf, transformedParent.bin));
+        await assert.rejects(
+            readGlb(await transformedParentFs.createSource('transformed-parent.glb'), createChunkDataPool()),
+            /node transform/
+        );
     });
 
     it('integrates with format detection and file info', async () => {
